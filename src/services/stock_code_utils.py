@@ -36,6 +36,11 @@ def is_code_like(value: str) -> bool:
         return False
     if text.isdigit() and len(text) in (5, 6):
         return True
+    
+    # 新增：支援台股代碼 (例如 0050.TW, 2330.TW, 0050.TWO)
+    if text.endswith(".TW") or text.endswith(".TWO"):
+        return True
+        
     for suffix in (".SH", ".SZ", ".SS"):
         if text.endswith(suffix):
             base = text[: -len(suffix)].strip()
@@ -57,12 +62,18 @@ def normalize_code(raw: str) -> Optional[str]:
     - Suffix format: 600519.SH, 600519.SZ
     - Prefix format: SH600519, SZ000001, HK00700 (case-insensitive)
     - US ticker symbols: AAPL, TSLA
+    - TW ticker symbols: 0050.TW, 2330.TW
     """
     text = raw.strip().upper()
     if not text:
         return None
     if text.isdigit() and len(text) in (5, 6):
         return text
+        
+    # 新增：如果是台股，直接回傳帶有後綴的完整代碼給 YFinance 處理
+    if text.endswith(".TW") or text.endswith(".TWO"):
+        return text
+        
     if re.match(r"^[A-Z]{1,5}(\.[A-Z])?$", text):
         return text
     for suffix in (".SH", ".SZ", ".SS"):
